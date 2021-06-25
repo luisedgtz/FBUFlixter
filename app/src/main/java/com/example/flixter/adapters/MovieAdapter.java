@@ -1,6 +1,9 @@
 package com.example.flixter.adapters;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.res.Configuration;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,10 +15,15 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.flixter.MovieDetailsActivity;
 import com.example.flixter.R;
 import com.example.flixter.models.Movie;
 
+import org.parceler.Parcels;
+
 import java.util.List;
+
+import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
 
 public class MovieAdapter extends  RecyclerView.Adapter<MovieAdapter.ViewHolder> {
 
@@ -52,7 +60,7 @@ public class MovieAdapter extends  RecyclerView.Adapter<MovieAdapter.ViewHolder>
         return movies.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder{
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         TextView tvTitle;
         TextView tvOverview;
@@ -63,13 +71,50 @@ public class MovieAdapter extends  RecyclerView.Adapter<MovieAdapter.ViewHolder>
             tvTitle = itemView.findViewById(R.id.tvTitle);
             tvOverview = itemView.findViewById(R.id.tvOverview);
             ivPoster = itemView.findViewById(R.id.ivPoster);
+            itemView.setOnClickListener(this);
 
         }
 
         public void bind(Movie movie){
             tvTitle.setText(movie.getTitle());
             tvOverview.setText(movie.getOverview());
-            Glide.with(context).load(movie.getPosterPath()).into(ivPoster);
+            String imageURL;
+            int placeholder;
+            //If phone is in landscape
+            if(context.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
+                imageURL = movie.getBackdropPath();
+                placeholder = R.drawable.flicks_backdrop_placeholder;
+            }else{
+                imageURL = movie.getPosterPath();
+                placeholder = R.drawable.flicks_movie_placeholder;
+            }
+
+            int radius = 50;
+            int margin = 10;
+
+            Glide.with(context)
+                    .load(imageURL)
+                    .placeholder(placeholder)
+                    .transform(new RoundedCornersTransformation(radius, margin))
+                    .into(ivPoster);
+        }
+
+        @Override
+        public void onClick(View v){
+            //get item position
+            int position = getAdapterPosition();
+            //Validate the position actually exists
+            if(position != RecyclerView.NO_POSITION) {
+                //Get Movie at position
+                Movie movie = movies.get(position);
+                //Create intent for new activity
+                Intent intent = new Intent(context, MovieDetailsActivity.class);
+                //serialize the movie using parceler, use its short name as a key
+                intent.putExtra(Movie.class.getSimpleName(), Parcels.wrap(movie));
+                //show the activity
+                context.startActivity(intent);
+            }
+
         }
     }
 
